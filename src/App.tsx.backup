@@ -1,0 +1,1927 @@
+import React, { useState } from "react";
+
+interface Contributor {
+  id: string;
+  name: string;
+  affiliation: string;
+  expertiseLevel: string;
+  willingToContribute: string;
+  timestamp: Date;
+}
+
+interface Idea {
+  id: string;
+  title: string;
+  description: string;
+  proposedBy: string;
+  format: string;
+  ideaType: string;
+  timestamp: Date;
+  contributors: Contributor[];
+  upvotes: number;
+}
+
+function App() {
+  const [currentPage, setCurrentPage] = useState("home");
+  const [ideas, setIdeas] = useState(() => {
+    const saved = localStorage.getItem("ideas");
+    if (saved) {
+      const parsedIdeas = JSON.parse(saved);
+      // Convert timestamp strings back to Date objects
+      return parsedIdeas.map((idea: any) => ({
+        ...idea,
+        timestamp: new Date(idea.timestamp),
+        contributors: idea.contributors.map((contributor: any) => ({
+          ...contributor,
+          timestamp: new Date(contributor.timestamp),
+        })),
+      }));
+    }
+    return [];
+  });
+  const [showContributeForm, setShowContributeForm] = useState(null);
+
+  const addIdea = (newIdea: Idea) => {
+    const updatedIdeas = [newIdea, ...ideas];
+    setIdeas(updatedIdeas);
+    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+    setCurrentPage("vote");
+  };
+
+  const addContributor = (ideaId: string, contributor: Contributor) => {
+    setIdeas((prevIdeas) => {
+      const updatedIdeas = prevIdeas.map((idea) =>
+        idea.id === ideaId
+          ? { ...idea, contributors: [...idea.contributors, contributor] }
+          : idea
+      );
+      localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+      return updatedIdeas;
+    });
+    setShowContributeForm(null);
+  };
+
+  const upvoteIdea = (ideaId: string) => {
+    setIdeas((prevIdeas) => {
+      const updatedIdeas = prevIdeas.map((idea) =>
+        idea.id === ideaId
+          ? { ...idea, upvotes: (idea.upvotes || 0) + 1 }
+          : idea
+      );
+      // Basic persistence - save to localStorage
+      localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+      return updatedIdeas;
+    });
+  };
+
+  const Header = () => (
+    <header
+      style={{
+        background: "#ffffff",
+        borderBottom: "1px solid #f0f0f0",
+        padding: "0 0 0 0",
+        position: "sticky",
+        top: "0",
+        zIndex: "100",
+      }}
+    >
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 24px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            height: "64px",
+          }}
+        >
+          <h1
+            style={{
+              margin: "0",
+              fontSize: "18px",
+              fontWeight: "600",
+              color: "#002147",
+              cursor: "pointer",
+              letterSpacing: "-0.01em",
+            }}
+            onClick={() => setCurrentPage("home")}
+          >
+            Outreach Ideas Hub
+          </h1>
+
+          <nav style={{ display: "flex", gap: "0" }}>
+            {[
+              { key: "home", label: "Home" },
+              { key: "submit", label: "Submit" },
+              { key: "vote", label: "Vote & Contribute" },
+              { key: "summary", label: "Summary" },
+            ].map((page) => (
+              <button
+                key={page.key}
+                onClick={() => setCurrentPage(page.key)}
+                style={{
+                  background: "transparent",
+                  color: currentPage === page.key ? "#002147" : "#666",
+                  border: "none",
+                  padding: "8px 16px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: currentPage === page.key ? "500" : "400",
+                  transition: "color 0.15s ease",
+                  borderBottom:
+                    currentPage === page.key
+                      ? "2px solid #002147"
+                      : "2px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (currentPage !== page.key) {
+                    e.target.style.color = "#002147";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (currentPage !== page.key) {
+                    e.target.style.color = "#666";
+                  }
+                }}
+              >
+                {page.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+
+  const HomePage = () => (
+    <main
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "48px 24px",
+      }}
+    >
+      <div style={{ textAlign: "center", marginBottom: "64px" }}>
+        <h2
+          style={{
+            color: "#002147",
+            fontSize: "32px",
+            fontWeight: "600",
+            margin: "0 0 16px 0",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Welcome to the Outreach Ideas Hub
+        </h2>
+        <p
+          style={{
+            color: "#666",
+            fontSize: "16px",
+            margin: "0",
+            maxWidth: "540px",
+            marginLeft: "auto",
+            marginRight: "auto",
+            lineHeight: "1.5",
+          }}
+        >
+          A collaborative platform where brilliant minds come together to share,
+          develop, and contribute to innovative outreach ideas.
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: "24px",
+          marginBottom: "48px",
+        }}
+      >
+        {[
+          {
+            key: "submit",
+            title: "Submit an Idea",
+            description: "Share your innovative outreach concept",
+            icon: "✨",
+          },
+          {
+            key: "vote",
+            title: "Vote & Contribute",
+            description: "Explore ideas and offer your expertise",
+            icon: "🤝",
+          },
+          {
+            key: "summary",
+            title: "Ideas Summary",
+            description: "View analytics and insights",
+            icon: "📊",
+          },
+        ].map((card) => (
+          <div
+            key={card.key}
+            onClick={() => setCurrentPage(card.key)}
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e6e6e6",
+              borderRadius: "8px",
+              padding: "24px",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#002147";
+              e.currentTarget.style.boxShadow =
+                "0 2px 8px rgba(0, 33, 71, 0.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#e6e6e6";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <div
+              style={{
+                fontSize: "24px",
+                marginBottom: "16px",
+              }}
+            >
+              {card.icon}
+            </div>
+            <h3
+              style={{
+                color: "#002147",
+                fontSize: "18px",
+                fontWeight: "600",
+                margin: "0 0 8px 0",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {card.title}
+            </h3>
+            <p
+              style={{
+                color: "#666",
+                fontSize: "14px",
+                margin: "0",
+                lineHeight: "1.4",
+              }}
+            >
+              {card.description}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div
+        style={{
+          background: "#fafafa",
+          border: "1px solid #e6e6e6",
+          borderRadius: "8px",
+          padding: "24px",
+          textAlign: "center",
+        }}
+      >
+        <h3
+          style={{
+            color: "#002147",
+            fontSize: "16px",
+            fontWeight: "600",
+            margin: "0 0 8px 0",
+          }}
+        >
+          Platform Statistics
+        </h3>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+            gap: "24px",
+            marginTop: "16px",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#002147",
+                marginBottom: "4px",
+              }}
+            >
+              {ideas.length}
+            </div>
+            <div style={{ fontSize: "14px", color: "#666" }}>
+              Ideas Submitted
+            </div>
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#002147",
+                marginBottom: "4px",
+              }}
+            >
+              {ideas.reduce(
+                (total, idea) => total + idea.contributors.length,
+                0
+              )}
+            </div>
+            <div style={{ fontSize: "14px", color: "#666" }}>Contributors</div>
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#002147",
+                marginBottom: "4px",
+              }}
+            >
+              {ideas.filter((idea) => idea.contributors.length > 0).length}
+            </div>
+            <div style={{ fontSize: "14px", color: "#666" }}>Active Ideas</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+
+  const SubmitPage = () => {
+    const [formData, setFormData] = useState({
+      title: "",
+      description: "",
+      proposedBy: "",
+      format: "",
+      ideaType: "",
+    });
+
+    const formatOptions = [
+      { value: "Workshop", color: "#2563eb" },
+      { value: "Forum Topic", color: "#7c3aed" },
+      { value: "CPD", color: "#059669" },
+      { value: "Resource", color: "#dc2626" },
+      { value: "Process", color: "#ea580c" },
+      { value: "Idea", color: "#0891b2" },
+      { value: "Other", color: "#6b7280" },
+    ];
+
+    const ideaTypeOptions = [
+      { value: "New", color: "#059669" },
+      { value: "Renew", color: "#0891b2" },
+      { value: "Revive", color: "#ea580c" },
+      { value: "Speculative", color: "#7c3aed" },
+    ];
+
+    const handleSubmit = (e: any) => {
+      e.preventDefault();
+
+      if (
+        !formData.title.trim() ||
+        !formData.description.trim() ||
+        !formData.proposedBy.trim() ||
+        !formData.format.trim() ||
+        !formData.ideaType.trim()
+      ) {
+        alert("Please fill in all fields");
+        return;
+      }
+
+      const newIdea: Idea = {
+        id: Date.now().toString(),
+        title: formData.title,
+        description: formData.description,
+        proposedBy: formData.proposedBy,
+        format: formData.format,
+        ideaType: formData.ideaType,
+        timestamp: new Date(),
+        contributors: [],
+        upvotes: 0,
+      };
+
+      addIdea(newIdea);
+      setFormData({
+        title: "",
+        description: "",
+        proposedBy: "",
+        format: "",
+        ideaType: "",
+      });
+    };
+
+    const handleInputChange = (e: any) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    };
+
+    return (
+      <main
+        style={{
+          maxWidth: "600px",
+          margin: "0 auto",
+          padding: "48px 24px",
+        }}
+      >
+        <div style={{ marginBottom: "48px" }}>
+          <h2
+            style={{
+              color: "#002147",
+              fontSize: "24px",
+              fontWeight: "600",
+              margin: "0 0 8px 0",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Submit Your Idea
+          </h2>
+          <p
+            style={{
+              color: "#666",
+              fontSize: "16px",
+              margin: "0",
+            }}
+          >
+            Share your innovative outreach concept
+          </p>
+        </div>
+
+        <section
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e6e6e6",
+            borderRadius: "8px",
+            padding: "32px",
+          }}
+        >
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+          >
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  color: "#002147",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginBottom: "8px",
+                }}
+              >
+                Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  border: "1px solid #e6e6e6",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  transition: "border-color 0.15s ease",
+                  background: "#ffffff",
+                  boxSizing: "border-box",
+                  outline: "none",
+                }}
+                placeholder="What's your idea?"
+                required
+                onFocus={(e) => (e.target.style.borderColor = "#002147")}
+                onBlur={(e) => (e.target.style.borderColor = "#e6e6e6")}
+              />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  color: "#002147",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginBottom: "8px",
+                }}
+              >
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={5}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  border: "1px solid #e6e6e6",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  transition: "border-color 0.15s ease",
+                  background: "#ffffff",
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                  outline: "none",
+                  fontFamily: "inherit",
+                }}
+                placeholder="Describe your idea in detail..."
+                required
+                onFocus={(e) => (e.target.style.borderColor = "#002147")}
+                onBlur={(e) => (e.target.style.borderColor = "#e6e6e6")}
+              />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  color: "#002147",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginBottom: "8px",
+                }}
+              >
+                Proposed By
+              </label>
+              <input
+                type="text"
+                name="proposedBy"
+                value={formData.proposedBy}
+                onChange={handleInputChange}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  border: "1px solid #e6e6e6",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  transition: "border-color 0.15s ease",
+                  background: "#ffffff",
+                  boxSizing: "border-box",
+                  outline: "none",
+                }}
+                placeholder="Your name"
+                required
+                onFocus={(e) => (e.target.style.borderColor = "#002147")}
+                onBlur={(e) => (e.target.style.borderColor = "#e6e6e6")}
+              />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  color: "#002147",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginBottom: "8px",
+                }}
+              >
+                Format
+              </label>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                {formatOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, format: option.value }))
+                    }
+                    style={{
+                      background:
+                        formData.format === option.value
+                          ? option.color
+                          : "#ffffff",
+                      color:
+                        formData.format === option.value
+                          ? "white"
+                          : option.color,
+                      border: `1px solid ${option.color}`,
+                      borderRadius: "6px",
+                      padding: "8px 12px",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      outline: "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (formData.format !== option.value) {
+                        e.currentTarget.style.background = option.color;
+                        e.currentTarget.style.color = "white";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (formData.format !== option.value) {
+                        e.currentTarget.style.background = "#ffffff";
+                        e.currentTarget.style.color = option.color;
+                      }
+                    }}
+                  >
+                    {option.value}
+                  </button>
+                ))}
+              </div>
+              {!formData.format && (
+                <div
+                  style={{ marginTop: "8px", fontSize: "12px", color: "#999" }}
+                >
+                  Select a format *
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  color: "#002147",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginBottom: "8px",
+                }}
+              >
+                Idea Type
+              </label>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                {ideaTypeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        ideaType: option.value,
+                      }))
+                    }
+                    style={{
+                      background:
+                        formData.ideaType === option.value
+                          ? option.color
+                          : "#ffffff",
+                      color:
+                        formData.ideaType === option.value
+                          ? "white"
+                          : option.color,
+                      border: `1px solid ${option.color}`,
+                      borderRadius: "6px",
+                      padding: "8px 12px",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      outline: "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (formData.ideaType !== option.value) {
+                        e.currentTarget.style.background = option.color;
+                        e.currentTarget.style.color = "white";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (formData.ideaType !== option.value) {
+                        e.currentTarget.style.background = "#ffffff";
+                        e.currentTarget.style.color = option.color;
+                      }
+                    }}
+                  >
+                    {option.value}
+                  </button>
+                ))}
+              </div>
+              {!formData.ideaType && (
+                <div
+                  style={{ marginTop: "8px", fontSize: "12px", color: "#999" }}
+                >
+                  Select an idea type *
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                background: "#002147",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                padding: "12px 24px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background 0.15s ease",
+                marginTop: "8px",
+              }}
+              onMouseEnter={(e) => (e.target.style.background = "#001a35")}
+              onMouseLeave={(e) => (e.target.style.background = "#002147")}
+            >
+              Submit Idea
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  };
+
+  const VotePage = () => {
+    const [contributorData, setContributorData] = useState({
+      name: "",
+      affiliation: "",
+      experienceLevel: "",
+      willingnessToContribute: [] as string[],
+    });
+
+    const formatOptions = [
+      { value: "Workshop", color: "#2563eb" },
+      { value: "Forum Topic", color: "#7c3aed" },
+      { value: "CPD", color: "#059669" },
+      { value: "Resource", color: "#dc2626" },
+      { value: "Process", color: "#ea580c" },
+      { value: "Idea", color: "#0891b2" },
+      { value: "Other", color: "#6b7280" },
+    ];
+
+    const ideaTypeOptions = [
+      { value: "New", color: "#059669" },
+      { value: "Renew", color: "#0891b2" },
+      { value: "Revive", color: "#ea580c" },
+      { value: "Speculative", color: "#7c3aed" },
+    ];
+
+    const affiliationOptions = [
+      { value: "College", color: "#002147" },
+      { value: "Department", color: "#2563eb" },
+      { value: "GLAM", color: "#7c3aed" },
+      { value: "UAO", color: "#dc2626" },
+      { value: "Other", color: "#6b7280" },
+    ];
+
+    const experienceLevelOptions = [
+      { value: "New(ish)", color: "#86efac" },
+      { value: "Experienced", color: "#22c55e" },
+      { value: "Very Experienced", color: "#16a34a" },
+    ];
+
+    const willingnessOptions = [
+      { value: "Organise", color: "#3b82f6" },
+      { value: "Deliver", color: "#8b5cf6" },
+      { value: "Host", color: "#10b981" },
+      { value: "Provide Venue", color: "#f59e0b" },
+      { value: "Admin", color: "#ef4444" },
+    ];
+
+    const getOptionColor = (options: any[], value: string) => {
+      const option = options.find((opt) => opt.value === value);
+      return option ? option.color : "#002147";
+    };
+
+    const handleContributorInputChange = (e: any) => {
+      const { name, value } = e.target;
+      setContributorData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    };
+
+    const toggleWillingness = (value: string) => {
+      setContributorData((prev) => ({
+        ...prev,
+        willingnessToContribute: prev.willingnessToContribute.includes(value)
+          ? prev.willingnessToContribute.filter((item) => item !== value)
+          : [...prev.willingnessToContribute, value],
+      }));
+    };
+
+    const handleContributeSubmit = (e: any, ideaId: string) => {
+      e.preventDefault();
+
+      if (
+        !contributorData.name.trim() ||
+        !contributorData.affiliation.trim() ||
+        !contributorData.experienceLevel.trim() ||
+        contributorData.willingnessToContribute.length === 0
+      ) {
+        alert(
+          "Please fill in all contributor fields and select at least one contribution type"
+        );
+        return;
+      }
+
+      const newContributor: Contributor = {
+        id: Date.now().toString(),
+        name: contributorData.name,
+        affiliation: contributorData.affiliation,
+        expertiseLevel: contributorData.experienceLevel,
+        willingToContribute: contributorData.willingnessToContribute.join(", "),
+        timestamp: new Date(),
+      };
+
+      addContributor(ideaId, newContributor);
+      setContributorData({
+        name: "",
+        affiliation: "",
+        experienceLevel: "",
+        willingnessToContribute: [],
+      });
+    };
+
+    return (
+      <main
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "48px 24px",
+        }}
+      >
+        <div style={{ marginBottom: "48px" }}>
+          <h2
+            style={{
+              color: "#002147",
+              fontSize: "24px",
+              fontWeight: "600",
+              margin: "0 0 8px 0",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Vote & Contribute
+          </h2>
+          <p
+            style={{
+              color: "#666",
+              fontSize: "16px",
+              margin: "0",
+            }}
+          >
+            Explore ideas and offer your expertise
+          </p>
+        </div>
+
+        {ideas.length === 0 ? (
+          <div
+            style={{
+              background: "#fafafa",
+              border: "1px solid #e6e6e6",
+              borderRadius: "8px",
+              padding: "64px 32px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>💡</div>
+            <h3
+              style={{
+                color: "#002147",
+                marginBottom: "8px",
+                fontSize: "18px",
+                fontWeight: "600",
+              }}
+            >
+              No ideas yet
+            </h3>
+            <p
+              style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#666" }}
+            >
+              Be the first to share your brilliant idea!
+            </p>
+            <button
+              onClick={() => setCurrentPage("submit")}
+              style={{
+                background: "#002147",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                padding: "12px 24px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background 0.15s ease",
+              }}
+              onMouseEnter={(e) => (e.target.style.background = "#001a35")}
+              onMouseLeave={(e) => (e.target.style.background = "#002147")}
+            >
+              Submit an Idea
+            </button>
+          </div>
+        ) : (
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e6e6e6",
+              borderRadius: "8px",
+              overflow: "hidden",
+            }}
+          >
+            {/* Table Header */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 120px 100px 100px 80px 60px",
+                gap: "16px",
+                padding: "12px 16px",
+                background: "#fafafa",
+                borderBottom: "1px solid #e6e6e6",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#666",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+            >
+              <div>Title</div>
+              <div>Proposed By</div>
+              <div>Format</div>
+              <div>Type</div>
+              <div>Contributors</div>
+              <div>Votes</div>
+            </div>
+
+            {/* Table Rows */}
+            {ideas.map((idea: Idea, index) => (
+              <div key={idea.id}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 120px 100px 100px 80px 60px",
+                    gap: "16px",
+                    padding: "12px 16px",
+                    borderBottom: index < ideas.length - 1 ? "1px solid #f0f0f0" : "none",
+                    alignItems: "center",
+                    fontSize: "13px",
+                    transition: "background 0.1s ease",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#fafafa";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                  onClick={() => {
+                    const contributorSection = document.getElementById(`contributors-${idea.id}`);
+                    if (contributorSection) {
+                      contributorSection.style.display = 
+                        contributorSection.style.display === "none" ? "block" : "none";
+                    }
+                  }}
+                >
+                  {/* Title with description tooltip */}
+                  <div
+                    style={{
+                      color: "#002147",
+                      fontWeight: "500",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={idea.description}
+                  >
+                    {idea.title}
+                  </div>
+
+                  {/* Proposed By */}
+                  <div
+                    style={{
+                      color: "#333",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {idea.proposedBy}
+                  </div>
+
+                  {/* Format Tag */}
+                  <div>
+                    <span
+                      style={{
+                        background: getOptionColor(formatOptions, idea.format),
+                        color: "white",
+                        padding: "2px 6px",
+                        borderRadius: "3px",
+                        fontSize: "10px",
+                        fontWeight: "500",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      {idea.format}
+                    </span>
+                  </div>
+
+                  {/* Type Tag */}
+                  <div>
+                    <span
+                      style={{
+                        background: getOptionColor(ideaTypeOptions, idea.ideaType),
+                        color: "white",
+                        padding: "2px 6px",
+                        borderRadius: "3px",
+                        fontSize: "10px",
+                        fontWeight: "500",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      {idea.ideaType}
+                    </span>
+                  </div>
+
+                  {/* Contributors Count */}
+                  <div
+                    style={{
+                      textAlign: "center",
+                      color: "#666",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {idea.contributors.length}
+                  </div>
+
+                  {/* Upvote Button */}
+                  <div style={{ textAlign: "center" }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        upvoteIdea(idea.id);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "3px",
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "4px",
+                        borderRadius: "4px",
+                        transition: "all 0.15s ease",
+                        outline: "none",
+                        width: "100%",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#fff5f7";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                      }}
+                    >
+                      <span style={{ fontSize: "12px", color: "#ff6b8a" }}>♡</span>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          color: "#999",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {idea.upvotes || 0}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expandable Contributors Section */}
+                <div
+                  id={`contributors-${idea.id}`}
+                  style={{
+                    display: "none",
+                    padding: "16px",
+                    background: "#fafafa",
+                    borderBottom: index < ideas.length - 1 ? "1px solid #f0f0f0" : "none",
+                  }}
+                >
+                  <div style={{ marginBottom: "16px" }}>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#002147",
+                        fontWeight: "600",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      Description
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#333",
+                        lineHeight: "1.4",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      {idea.description}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#999",
+                      }}
+                    >
+                      Submitted on {idea.timestamp.toLocaleDateString()} at{" "}
+                      {idea.timestamp.toLocaleTimeString()}
+                    </div>
+                  </div>
+
+                  {/* Contributors in expanded view */}
+                  {idea.contributors.length > 0 && (
+                    <div style={{ marginTop: "16px" }}>
+                      <div
+                        style={{
+                          fontSize: "13px",
+                          color: "#002147",
+                          fontWeight: "600",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        Contributors ({idea.contributors.length})
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        {idea.contributors.map((contributor: Contributor) => (
+                          <div
+                            key={contributor.id}
+                            style={{
+                              background: "#ffffff",
+                              padding: "10px 12px",
+                              borderRadius: "4px",
+                              border: "1px solid #e6e6e6",
+                            }}
+                          >
+                            <div style={{ fontSize: "12px", color: "#002147" }}>
+                              <strong>{contributor.name}</strong> ·{" "}
+                              {contributor.affiliation} ·{" "}
+                              {contributor.expertiseLevel}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: "#666",
+                                marginTop: "2px",
+                              }}
+                            >
+                              {contributor.willingToContribute}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Contribute Section in expanded view */}
+                  {showContributeForm === idea.id ? (
+                  <div
+                    style={{
+                      background: "#fafafa",
+                      padding: "20px",
+                      borderRadius: "6px",
+                      border: "1px solid #e6e6e6",
+                    }}
+                  >
+                    <h4
+                      style={{
+                        color: "#002147",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        margin: "0 0 16px 0",
+                      }}
+                    >
+                      Join this idea
+                    </h4>
+
+                    <form
+                      onSubmit={(e) => handleContributeSubmit(e, idea.id)}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                      }}
+                    >
+                      <div>
+                        <label
+                          style={{
+                            display: "block",
+                            color: "#002147",
+                            fontSize: "12px",
+                            fontWeight: "500",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={contributorData.name}
+                          onChange={handleContributorInputChange}
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            border: "1px solid #e6e6e6",
+                            borderRadius: "4px",
+                            fontSize: "13px",
+                            background: "white",
+                            boxSizing: "border-box",
+                            outline: "none",
+                          }}
+                          placeholder="Your name"
+                          required
+                          onFocus={(e) =>
+                            (e.target.style.borderColor = "#002147")
+                          }
+                          onBlur={(e) =>
+                            (e.target.style.borderColor = "#e6e6e6")
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: "block",
+                            color: "#002147",
+                            fontSize: "12px",
+                            fontWeight: "500",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Affiliation
+                        </label>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px",
+                          }}
+                        >
+                          {affiliationOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() =>
+                                setContributorData((prev) => ({
+                                  ...prev,
+                                  affiliation: option.value,
+                                }))
+                              }
+                              style={{
+                                background:
+                                  contributorData.affiliation === option.value
+                                    ? option.color
+                                    : "#ffffff",
+                                color:
+                                  contributorData.affiliation === option.value
+                                    ? "white"
+                                    : option.color,
+                                border: `1px solid ${option.color}`,
+                                borderRadius: "4px",
+                                padding: "6px 10px",
+                                fontSize: "12px",
+                                fontWeight: "500",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                                outline: "none",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (
+                                  contributorData.affiliation !== option.value
+                                ) {
+                                  e.currentTarget.style.background =
+                                    option.color;
+                                  e.currentTarget.style.color = "white";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (
+                                  contributorData.affiliation !== option.value
+                                ) {
+                                  e.currentTarget.style.background = "#ffffff";
+                                  e.currentTarget.style.color = option.color;
+                                }
+                              }}
+                            >
+                              {option.value}
+                            </button>
+                          ))}
+                        </div>
+                        {!contributorData.affiliation && (
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              fontSize: "11px",
+                              color: "#999",
+                            }}
+                          >
+                            Select affiliation *
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: "block",
+                            color: "#002147",
+                            fontSize: "12px",
+                            fontWeight: "500",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Experience Level
+                        </label>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px",
+                          }}
+                        >
+                          {experienceLevelOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() =>
+                                setContributorData((prev) => ({
+                                  ...prev,
+                                  experienceLevel: option.value,
+                                }))
+                              }
+                              style={{
+                                background:
+                                  contributorData.experienceLevel ===
+                                  option.value
+                                    ? option.color
+                                    : "#ffffff",
+                                color:
+                                  contributorData.experienceLevel ===
+                                  option.value
+                                    ? "white"
+                                    : option.color,
+                                border: `1px solid ${option.color}`,
+                                borderRadius: "4px",
+                                padding: "6px 10px",
+                                fontSize: "12px",
+                                fontWeight: "500",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                                outline: "none",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (
+                                  contributorData.experienceLevel !==
+                                  option.value
+                                ) {
+                                  e.currentTarget.style.background =
+                                    option.color;
+                                  e.currentTarget.style.color = "white";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (
+                                  contributorData.experienceLevel !==
+                                  option.value
+                                ) {
+                                  e.currentTarget.style.background = "#ffffff";
+                                  e.currentTarget.style.color = option.color;
+                                }
+                              }}
+                            >
+                              {option.value}
+                            </button>
+                          ))}
+                        </div>
+                        {!contributorData.experienceLevel && (
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              fontSize: "11px",
+                              color: "#999",
+                            }}
+                          >
+                            Select experience level *
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: "block",
+                            color: "#002147",
+                            fontSize: "12px",
+                            fontWeight: "500",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Willingness to Contribute
+                        </label>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px",
+                          }}
+                        >
+                          {willingnessOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => toggleWillingness(option.value)}
+                              style={{
+                                background:
+                                  contributorData.willingnessToContribute.includes(
+                                    option.value
+                                  )
+                                    ? option.color
+                                    : "#ffffff",
+                                color:
+                                  contributorData.willingnessToContribute.includes(
+                                    option.value
+                                  )
+                                    ? "white"
+                                    : option.color,
+                                border: `1px solid ${option.color}`,
+                                borderRadius: "4px",
+                                padding: "6px 10px",
+                                fontSize: "12px",
+                                fontWeight: "500",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                                outline: "none",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (
+                                  !contributorData.willingnessToContribute.includes(
+                                    option.value
+                                  )
+                                ) {
+                                  e.currentTarget.style.background =
+                                    option.color;
+                                  e.currentTarget.style.color = "white";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (
+                                  !contributorData.willingnessToContribute.includes(
+                                    option.value
+                                  )
+                                ) {
+                                  e.currentTarget.style.background = "#ffffff";
+                                  e.currentTarget.style.color = option.color;
+                                }
+                              }}
+                            >
+                              {option.value}
+                            </button>
+                          ))}
+                        </div>
+                        {contributorData.willingnessToContribute.length ===
+                          0 && (
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              fontSize: "11px",
+                              color: "#999",
+                            }}
+                          >
+                            Select at least one contribution type *
+                          </div>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          marginTop: "8px",
+                        }}
+                      >
+                        <button
+                          type="submit"
+                          style={{
+                            background: "#002147",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "8px 16px",
+                            fontSize: "13px",
+                            fontWeight: "500",
+                            cursor: "pointer",
+                            transition: "background 0.15s ease",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.background = "#001a35")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.background = "#002147")
+                          }
+                        >
+                          Join
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowContributeForm(null)}
+                          style={{
+                            background: "#999",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "8px 16px",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            transition: "background 0.15s ease",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.background = "#777")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.background = "#999")
+                          }
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowContributeForm(idea.id)}
+                    style={{
+                      background: "#002147",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "background 0.15s ease",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.target.style.background = "#001a35")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.background = "#002147")
+                    }
+                  >
+                    Contribute
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    );
+  };
+
+  const SummaryPage = () => {
+    const formatOptions = [
+      { value: "Workshop", color: "#2563eb" },
+      { value: "Forum Topic", color: "#7c3aed" },
+      { value: "CPD", color: "#059669" },
+      { value: "Resource", color: "#dc2626" },
+      { value: "Process", color: "#ea580c" },
+      { value: "Idea", color: "#0891b2" },
+      { value: "Other", color: "#6b7280" },
+    ];
+
+    const ideaTypeOptions = [
+      { value: "New", color: "#059669" },
+      { value: "Renew", color: "#0891b2" },
+      { value: "Revive", color: "#ea580c" },
+      { value: "Speculative", color: "#7c3aed" },
+    ];
+
+    const getOptionColor = (options: any[], value: string) => {
+      const option = options.find((opt) => opt.value === value);
+      return option ? option.color : "#002147";
+    };
+
+    return (
+      <main
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "48px 24px",
+        }}
+      >
+        <div style={{ marginBottom: "48px" }}>
+          <h2
+            style={{
+              color: "#002147",
+              fontSize: "24px",
+              fontWeight: "600",
+              margin: "0 0 8px 0",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Ideas Summary
+          </h2>
+          <p
+            style={{
+              color: "#666",
+              fontSize: "16px",
+              margin: "0",
+            }}
+          >
+            Analytics and insights about all submitted ideas
+          </p>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "24px",
+            marginBottom: "48px",
+          }}
+        >
+          {[
+            {
+              title: "Total Ideas",
+              value: ideas.length,
+              icon: "💡",
+            },
+            {
+              title: "Total Contributors",
+              value: ideas.reduce(
+                (total, idea) => total + idea.contributors.length,
+                0
+              ),
+              icon: "👥",
+            },
+            {
+              title: "Total Upvotes",
+              value: ideas.reduce(
+                (total, idea) => total + ((idea as Idea).upvotes || 0),
+                0
+              ),
+              icon: "❤️",
+            },
+            {
+              title: "Most Loved",
+              value:
+                ideas.length > 0
+                  ? Math.max(
+                      ...ideas.map((idea) => (idea as Idea).upvotes || 0)
+                    )
+                  : 0,
+              icon: "🌟",
+            },
+          ].map((stat, index) => (
+            <div
+              key={index}
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e6e6e6",
+                borderRadius: "8px",
+                padding: "24px",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: "24px", marginBottom: "8px" }}>
+                {stat.icon}
+              </div>
+              <div
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "600",
+                  color: "#002147",
+                  marginBottom: "8px",
+                }}
+              >
+                {stat.value}
+              </div>
+              <div
+                style={{
+                  fontSize: "14px",
+                  color: "#666",
+                  fontWeight: "500",
+                }}
+              >
+                {stat.title}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {ideas.length > 0 && (
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e6e6e6",
+              borderRadius: "8px",
+              padding: "24px",
+            }}
+          >
+            <h3
+              style={{
+                color: "#002147",
+                fontSize: "16px",
+                fontWeight: "600",
+                margin: "0 0 20px 0",
+              }}
+            >
+              Ideas by Format
+            </h3>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+            >
+              {[...new Set(ideas.map((idea) => (idea as Idea).format))].map(
+                (format) => {
+                  const count = ideas.filter(
+                    (idea) => (idea as Idea).format === format
+                  ).length;
+                  const percentage = Math.round((count / ideas.length) * 100);
+                  return (
+                    <div
+                      key={format}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "16px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          minWidth: "120px",
+                          fontSize: "14px",
+                          color: "#002147",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {format}
+                      </div>
+                      <div
+                        style={{
+                          flex: "1",
+                          height: "6px",
+                          background: "#f0f0f0",
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${percentage}%`,
+                            height: "100%",
+                            background: getOptionColor(
+                              formatOptions,
+                              format as string
+                            ),
+                            borderRadius: "3px",
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          minWidth: "80px",
+                          fontSize: "13px",
+                          color: "#666",
+                        }}
+                      >
+                        {count} ({percentage}%)
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Ideas by Type */}
+        {ideas.length > 0 && (
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e6e6e6",
+              borderRadius: "8px",
+              padding: "24px",
+              marginTop: "24px",
+            }}
+          >
+            <h3
+              style={{
+                color: "#002147",
+                fontSize: "16px",
+                fontWeight: "600",
+                margin: "0 0 20px 0",
+              }}
+            >
+              Ideas by Type
+            </h3>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+            >
+              {[...new Set(ideas.map((idea) => (idea as Idea).ideaType))].map(
+                (ideaType) => {
+                  const count = ideas.filter(
+                    (idea) => (idea as Idea).ideaType === ideaType
+                  ).length;
+                  const percentage = Math.round((count / ideas.length) * 100);
+                  return (
+                    <div
+                      key={ideaType}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "16px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          minWidth: "120px",
+                          fontSize: "14px",
+                          color: "#002147",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {ideaType}
+                      </div>
+                      <div
+                        style={{
+                          flex: "1",
+                          height: "6px",
+                          background: "#f0f0f0",
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${percentage}%`,
+                            height: "100%",
+                            background: getOptionColor(
+                              ideaTypeOptions,
+                              ideaType as string
+                            ),
+                            borderRadius: "3px",
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          minWidth: "80px",
+                          fontSize: "13px",
+                          color: "#666",
+                        }}
+                      >
+                        {count} ({percentage}%)
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+    );
+  };
+
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case "home":
+        return <HomePage />;
+      case "submit":
+        return <SubmitPage />;
+      case "vote":
+        return <VotePage />;
+      case "summary":
+        return <SummaryPage />;
+      default:
+        return <HomePage />;
+    }
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#fafafa",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      }}
+    >
+      <Header />
+      {renderCurrentPage()}
+    </div>
+  );
+}
+
+export default App;
