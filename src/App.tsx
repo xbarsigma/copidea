@@ -1932,7 +1932,7 @@ const App: React.FC = () => {
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #fafbff 0%, #f8fafc 100%)",
+        background: "linear-gradient(135deg, #f8faff 0%, #f0f5ff 100%)",
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
