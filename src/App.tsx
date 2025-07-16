@@ -5,7 +5,7 @@ interface Contributor {
   name: string;
   affiliation: string;
   expertiseLevel: string;
-  willingToContribute: string;
+  willingToContribute: string[];
   timestamp: Date;
 }
 
@@ -22,6 +22,19 @@ interface Idea {
 }
 
 const App: React.FC = () => {
+  // Load Google Fonts
+  React.useEffect(() => {
+    const link = document.createElement("link");
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&family=Noto+Serif:wght@400;600;700&family=Marcellus&family=Montserrat:wght@400;500;600;700&family=Bebas+Neue&family=Phudu:wght@400;500;600&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   const [currentPage, setCurrentPage] = useState("home");
   const [ideas, setIdeas] = useState<Idea[]>(() => {
     const savedIdeas = localStorage.getItem("ideas");
@@ -33,6 +46,10 @@ const App: React.FC = () => {
         contributors: idea.contributors.map((contributor: any) => ({
           ...contributor,
           timestamp: new Date(contributor.timestamp),
+          // Migrate old string format to new array format
+          willingToContribute: Array.isArray(contributor.willingToContribute)
+            ? contributor.willingToContribute
+            : [contributor.willingToContribute],
         })),
       }));
     }
@@ -90,10 +107,10 @@ const App: React.FC = () => {
   ];
 
   const ideaTypeOptions = [
-    { value: "New", color: "#059669" },
-    { value: "Renew", color: "#0891b2" },
-    { value: "Revive", color: "#ea580c" },
-    { value: "Speculative", color: "#7c3aed" },
+    { value: "New", color: "#10b981" },
+    { value: "Renew", color: "#06b6d4" },
+    { value: "Revive", color: "#f59e0b" },
+    { value: "Speculative", color: "#8b5cf6" },
   ];
 
   const getOptionColor = (options: any[], value: string) => {
@@ -185,6 +202,7 @@ const App: React.FC = () => {
                 backgroundClip: "text",
                 fontSize: "20px",
                 fontWeight: "600",
+                fontFamily: "'Montserrat', 'Roboto', sans-serif",
                 margin: "0",
                 letterSpacing: "-0.01em",
               }}
@@ -283,6 +301,7 @@ const App: React.FC = () => {
               style={{
                 fontSize: isMobile ? "24px" : "36px",
                 fontWeight: "600",
+                fontFamily: "'Montserrat', 'Roboto', sans-serif",
                 background: "linear-gradient(135deg, #002147 0%, #003366 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -305,9 +324,9 @@ const App: React.FC = () => {
                 padding: isMobile ? "0 8px" : "0",
               }}
             >
-              A collaborative platform for innovative outreach ideas. Share your
-              concepts, contribute to others' visions, and help shape the future
-              of engagement.
+              A collaborative platform for the Outreach community. Share what
+              you would like to see the community provide, offer to contribute
+              to sessions, and vote for ideas you love.
             </p>
             <div
               style={{
@@ -427,6 +446,7 @@ const App: React.FC = () => {
               style={{
                 fontSize: "24px",
                 color: "#002147",
+                fontFamily: "'Montserrat', 'Roboto', sans-serif",
                 marginBottom: "8px",
                 fontWeight: "600",
               }}
@@ -491,32 +511,15 @@ const App: React.FC = () => {
           {ideas.map((idea) => (
             <div
               key={idea.id}
-              onClick={() => setCurrentPage("vote")}
               style={{
                 background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
                 border: "1px solid #e2e8f0",
                 borderRadius: "12px",
                 padding: "24px",
-                cursor: "pointer",
                 transition: "all 0.3s ease",
-                height: "fit-content",
+                display: "flex",
+                flexDirection: "column",
                 boxShadow: "0 2px 4px rgba(0, 33, 71, 0.08)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow =
-                  "0 12px 24px rgba(0, 33, 71, 0.15)";
-                e.currentTarget.style.borderColor = "#002147";
-                e.currentTarget.style.background =
-                  "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow =
-                  "0 2px 4px rgba(0, 33, 71, 0.08)";
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.background =
-                  "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)";
               }}
             >
               {/* Title */}
@@ -524,6 +527,7 @@ const App: React.FC = () => {
                 style={{
                   fontSize: "18px",
                   fontWeight: "600",
+                  fontFamily: "'Roboto', sans-serif",
                   color: "#002147",
                   marginBottom: "12px",
                   lineHeight: "1.4",
@@ -619,55 +623,59 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Contributors */}
-              {idea.contributors.length > 0 && (
-                <div style={{ marginBottom: "20px" }}>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      color: "#94a3b8",
-                      fontWeight: "600",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      marginBottom: "8px",
-                      display: "block",
-                    }}
-                  >
-                    CONTRIBUTORS
-                  </span>
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}
-                  >
-                    {idea.contributors.slice(0, 3).map((contributor, index) => (
-                      <span
-                        key={contributor.id}
-                        style={{
-                          fontSize: "12px",
-                          color: "#475569",
-                          backgroundColor: "#f1f5f9",
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          fontWeight: "500",
-                        }}
-                      >
-                        {contributor.name}
-                      </span>
-                    ))}
-                    {idea.contributors.length > 3 && (
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          color: "#64748b",
-                          fontStyle: "italic",
-                          fontWeight: "500",
-                        }}
-                      >
-                        +{idea.contributors.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* Contributors - Always reserve space */}
+              <div style={{ marginBottom: "20px", minHeight: "48px" }}>
+                {idea.contributors.length > 0 && (
+                  <>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        color: "#94a3b8",
+                        fontWeight: "600",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        marginBottom: "8px",
+                        display: "block",
+                      }}
+                    >
+                      CONTRIBUTORS
+                    </span>
+                    <div
+                      style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}
+                    >
+                      {idea.contributors
+                        .slice(0, 3)
+                        .map((contributor, index) => (
+                          <span
+                            key={contributor.id}
+                            style={{
+                              fontSize: "12px",
+                              color: "#475569",
+                              backgroundColor: "#f1f5f9",
+                              padding: "4px 8px",
+                              borderRadius: "6px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            {contributor.name}
+                          </span>
+                        ))}
+                      {idea.contributors.length > 3 && (
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#64748b",
+                            fontStyle: "italic",
+                            fontWeight: "500",
+                          }}
+                        >
+                          +{idea.contributors.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
 
               {/* Footer with stats */}
               <div
@@ -679,6 +687,7 @@ const App: React.FC = () => {
                   borderTop: "1px solid #f1f5f9",
                   fontSize: "13px",
                   color: "#64748b",
+                  marginTop: "auto",
                 }}
               >
                 <div
@@ -778,6 +787,7 @@ const App: React.FC = () => {
               <h2
                 style={{
                   fontSize: isMobile ? "20px" : "28px",
+                  fontFamily: "'Montserrat', 'Roboto', sans-serif",
                   background:
                     "linear-gradient(135deg, #002147 0%, #003366 100%)",
                   WebkitBackgroundClip: "text",
@@ -797,7 +807,10 @@ const App: React.FC = () => {
                   lineHeight: "1.5",
                 }}
               >
-                Share your innovative outreach concept with the community
+                Submit anything you'd like to see us do across the Outreach
+                community. No idea is too big or small, whether its a CPD
+                session, something at Outreach Forum, or a resource you think we
+                need.
               </p>
             </div>
 
@@ -1126,6 +1139,7 @@ const App: React.FC = () => {
             <h2
               style={{
                 fontSize: isMobile ? "18px" : "20px",
+                fontFamily: "'Montserrat', 'Roboto', sans-serif",
                 background: "linear-gradient(135deg, #002147 0%, #003366 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -1144,7 +1158,13 @@ const App: React.FC = () => {
             </p>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: isMobile ? "12px" : "8px",
+            }}
+          >
             {ideas.map((idea) => (
               <div
                 key={idea.id}
@@ -1152,8 +1172,8 @@ const App: React.FC = () => {
                   background:
                     "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
                   border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                  padding: "16px",
+                  borderRadius: isMobile ? "12px" : "8px",
+                  padding: isMobile ? "20px" : "16px",
                   boxShadow: "0 2px 4px rgba(0, 33, 71, 0.05)",
                   transition: "all 0.2s ease",
                 }}
@@ -1178,33 +1198,41 @@ const App: React.FC = () => {
                     cursor: "pointer",
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center",
+                    alignItems: isMobile ? "flex-start" : "center",
+                    flexDirection: isMobile ? "column" : "row",
+                    gap: isMobile ? "16px" : "0",
                   }}
                 >
                   <div
                     style={{
                       flex: 1,
                       display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
+                      alignItems: isMobile ? "flex-start" : "center",
+                      gap: isMobile ? "12px" : "16px",
+                      flexDirection: isMobile ? "column" : "row",
+                      width: "100%",
                     }}
                   >
                     <div style={{ flex: 1 }}>
                       <div
                         style={{
                           display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          marginBottom: "4px",
+                          alignItems: isMobile ? "flex-start" : "center",
+                          gap: isMobile ? "8px" : "12px",
+                          marginBottom: isMobile ? "8px" : "4px",
+                          flexDirection: isMobile ? "column" : "row",
+                          width: "100%",
                         }}
                       >
                         <h3
                           style={{
-                            fontSize: "16px",
+                            fontSize: isMobile ? "18px" : "16px",
                             color: "#002147",
+                            fontFamily: "'Roboto', sans-serif",
                             margin: "0",
                             fontWeight: "600",
                             lineHeight: "1.3",
+                            flex: isMobile ? "none" : "1",
                           }}
                         >
                           {idea.title}
@@ -1252,17 +1280,18 @@ const App: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <div style={{ marginBottom: "6px" }}>
+                      <div style={{ marginBottom: isMobile ? "12px" : "6px" }}>
                         <div
                           style={{
                             display: "flex",
                             alignItems: "center",
                             gap: "4px",
+                            marginBottom: isMobile ? "4px" : "0",
                           }}
                         >
                           <span
                             style={{
-                              fontSize: "10px",
+                              fontSize: isMobile ? "11px" : "10px",
                               color: "#94a3b8",
                               fontWeight: "600",
                               textTransform: "uppercase",
@@ -1273,7 +1302,7 @@ const App: React.FC = () => {
                           </span>
                           <span
                             style={{
-                              fontSize: "13px",
+                              fontSize: isMobile ? "15px" : "13px",
                               color: "#475569",
                               fontWeight: "500",
                             }}
@@ -1287,12 +1316,12 @@ const App: React.FC = () => {
                               display: "flex",
                               alignItems: "center",
                               gap: "4px",
-                              marginTop: "2px",
+                              marginTop: isMobile ? "4px" : "2px",
                             }}
                           >
                             <span
                               style={{
-                                fontSize: "12px",
+                                fontSize: isMobile ? "14px" : "12px",
                                 color: "#64748b",
                                 fontWeight: "500",
                               }}
@@ -1309,7 +1338,9 @@ const App: React.FC = () => {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "12px",
+                      gap: isMobile ? "16px" : "12px",
+                      justifyContent: isMobile ? "space-between" : "flex-start",
+                      width: isMobile ? "100%" : "auto",
                     }}
                   >
                     <button
@@ -1320,16 +1351,17 @@ const App: React.FC = () => {
                       style={{
                         background: "#ff6b8a",
                         border: "none",
-                        borderRadius: "4px",
-                        padding: "4px 8px",
+                        borderRadius: isMobile ? "8px" : "4px",
+                        padding: isMobile ? "12px 16px" : "4px 8px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: "3px",
+                        gap: isMobile ? "6px" : "3px",
                         color: "white",
                         fontWeight: "600",
-                        fontSize: "11px",
+                        fontSize: isMobile ? "14px" : "11px",
                         transition: "all 0.2s ease",
+                        minHeight: isMobile ? "44px" : "auto",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-1px)";
@@ -1346,9 +1378,15 @@ const App: React.FC = () => {
                     </button>
                     <span
                       style={{
-                        fontSize: "14px",
+                        fontSize: isMobile ? "18px" : "14px",
                         color: "#64748b",
                         fontWeight: "600",
+                        padding: isMobile ? "8px" : "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: isMobile ? "44px" : "auto",
+                        minWidth: isMobile ? "44px" : "auto",
                       }}
                     >
                       {expandedIdeas.has(idea.id) ? "▼" : "▶"}
@@ -1359,29 +1397,30 @@ const App: React.FC = () => {
                 {expandedIdeas.has(idea.id) && (
                   <div
                     style={{
-                      marginTop: "16px",
-                      paddingTop: "16px",
+                      marginTop: isMobile ? "20px" : "16px",
+                      paddingTop: isMobile ? "20px" : "16px",
                       borderTop: "1px solid #f1f5f9",
                     }}
                   >
                     <p
                       style={{
-                        fontSize: "13px",
+                        fontSize: isMobile ? "16px" : "13px",
                         color: "#475569",
-                        marginBottom: "16px",
-                        lineHeight: "1.5",
+                        marginBottom: isMobile ? "20px" : "16px",
+                        lineHeight: isMobile ? "1.6" : "1.5",
                       }}
                     >
                       {idea.description}
                     </p>
 
                     {idea.contributors.length > 0 && (
-                      <div style={{ marginBottom: "16px" }}>
+                      <div style={{ marginBottom: isMobile ? "20px" : "16px" }}>
                         <h4
                           style={{
-                            fontSize: "12px",
+                            fontSize: isMobile ? "14px" : "12px",
                             color: "#002147",
-                            margin: "0 0 12px 0",
+                            fontFamily: "'Roboto', sans-serif",
+                            margin: isMobile ? "0 0 16px 0" : "0 0 12px 0",
                             fontWeight: "600",
                             textTransform: "uppercase",
                             letterSpacing: "0.05em",
@@ -1393,7 +1432,7 @@ const App: React.FC = () => {
                           style={{
                             display: "flex",
                             flexDirection: "column",
-                            gap: "8px",
+                            gap: isMobile ? "12px" : "8px",
                           }}
                         >
                           {idea.contributors.map((contributor) => {
@@ -1415,17 +1454,17 @@ const App: React.FC = () => {
                             ) => {
                               switch (contribution) {
                                 case "Organise":
-                                  return "#2563eb";
+                                  return "#6366f1";
                                 case "Deliver":
-                                  return "#7c3aed";
+                                  return "#d946ef";
                                 case "Host":
-                                  return "#059669";
+                                  return "#84cc16";
                                 case "Provide Venue":
-                                  return "#dc2626";
+                                  return "#f97316";
                                 case "Admin":
-                                  return "#ea580c";
+                                  return "#ec4899";
                                 default:
-                                  return "#6b7280";
+                                  return "#64748b";
                               }
                             };
 
@@ -1434,8 +1473,8 @@ const App: React.FC = () => {
                                 key={contributor.id}
                                 style={{
                                   backgroundColor: "#f8fafc",
-                                  padding: "12px",
-                                  borderRadius: "6px",
+                                  padding: isMobile ? "16px" : "12px",
+                                  borderRadius: isMobile ? "8px" : "6px",
                                   border: "1px solid #f1f5f9",
                                 }}
                               >
@@ -1444,22 +1483,29 @@ const App: React.FC = () => {
                                     display: "flex",
                                     justifyContent: "space-between",
                                     alignItems: "flex-start",
-                                    marginBottom: "8px",
+                                    marginBottom: isMobile ? "12px" : "8px",
+                                    flexDirection: isMobile ? "column" : "row",
+                                    gap: isMobile ? "12px" : "0",
                                   }}
                                 >
-                                  <div>
+                                  <div style={{ width: "100%" }}>
                                     <div
                                       style={{
                                         display: "flex",
-                                        alignItems: "center",
-                                        gap: "8px",
-                                        marginBottom: "4px",
+                                        alignItems: isMobile
+                                          ? "flex-start"
+                                          : "center",
+                                        gap: isMobile ? "8px" : "8px",
+                                        marginBottom: isMobile ? "8px" : "4px",
+                                        flexDirection: isMobile
+                                          ? "column"
+                                          : "row",
                                       }}
                                     >
                                       <strong
                                         style={{
                                           color: "#002147",
-                                          fontSize: "13px",
+                                          fontSize: isMobile ? "16px" : "13px",
                                           fontWeight: "600",
                                         }}
                                       >
@@ -1471,9 +1517,13 @@ const App: React.FC = () => {
                                             contributor.expertiseLevel
                                           ),
                                           color: "white",
-                                          padding: "2px 6px",
-                                          borderRadius: "3px",
-                                          fontSize: "9px",
+                                          padding: isMobile
+                                            ? "4px 8px"
+                                            : "2px 6px",
+                                          borderRadius: isMobile
+                                            ? "4px"
+                                            : "3px",
+                                          fontSize: isMobile ? "11px" : "9px",
                                           fontWeight: "600",
                                           textTransform: "uppercase",
                                           letterSpacing: "0.02em",
@@ -1511,22 +1561,36 @@ const App: React.FC = () => {
                                       </span>
                                     </div>
                                   </div>
-                                  <span
+                                  <div
                                     style={{
-                                      backgroundColor: getContributionColor(
-                                        contributor.willingToContribute
-                                      ),
-                                      color: "white",
-                                      padding: "3px 8px",
-                                      borderRadius: "4px",
-                                      fontSize: "10px",
-                                      fontWeight: "600",
-                                      textTransform: "uppercase",
-                                      letterSpacing: "0.02em",
+                                      display: "flex",
+                                      gap: "4px",
+                                      flexWrap: "wrap",
                                     }}
                                   >
-                                    {contributor.willingToContribute}
-                                  </span>
+                                    {contributor.willingToContribute.map(
+                                      (contribution, index) => (
+                                        <span
+                                          key={index}
+                                          style={{
+                                            backgroundColor:
+                                              getContributionColor(
+                                                contribution
+                                              ),
+                                            color: "white",
+                                            padding: "3px 8px",
+                                            borderRadius: "4px",
+                                            fontSize: "10px",
+                                            fontWeight: "600",
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.02em",
+                                          }}
+                                        >
+                                          {contribution}
+                                        </span>
+                                      )
+                                    )}
+                                  </div>
                                 </div>
                                 <div
                                   style={{ fontSize: "10px", color: "#94a3b8" }}
@@ -1574,29 +1638,29 @@ const App: React.FC = () => {
       name: "",
       affiliation: "",
       expertiseLevel: "",
-      willingToContribute: "",
+      willingToContribute: [] as string[],
     });
 
     const affiliationOptions = [
-      { value: "College", color: "#2563eb" },
-      { value: "Department", color: "#7c3aed" },
-      { value: "UAO", color: "#059669" },
-      { value: "GLAD", color: "#dc2626" },
-      { value: "Other", color: "#6b7280" },
+      { value: "College", color: "#3b82f6" },
+      { value: "Department", color: "#a855f7" },
+      { value: "UAO", color: "#14b8a6" },
+      { value: "GLAD", color: "#ef4444" },
+      { value: "Other", color: "#64748b" },
     ];
 
     const expertiseOptions = [
-      { value: "Newish", color: "#22c55e" },
-      { value: "Experienced", color: "#16a34a" },
-      { value: "Very Experienced", color: "#15803d" },
+      { value: "Newish", color: "#4ade80" },
+      { value: "Experienced", color: "#22c55e" },
+      { value: "Very Experienced", color: "#16a34a" },
     ];
 
     const contributionOptions = [
-      { value: "Organise", color: "#2563eb" },
-      { value: "Deliver", color: "#7c3aed" },
-      { value: "Host", color: "#059669" },
-      { value: "Provide Venue", color: "#dc2626" },
-      { value: "Admin", color: "#ea580c" },
+      { value: "Organise", color: "#6366f1" },
+      { value: "Deliver", color: "#d946ef" },
+      { value: "Host", color: "#84cc16" },
+      { value: "Provide Venue", color: "#f97316" },
+      { value: "Admin", color: "#ec4899" },
     ];
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -1605,9 +1669,11 @@ const App: React.FC = () => {
         !formData.name ||
         !formData.affiliation ||
         !formData.expertiseLevel ||
-        !formData.willingToContribute
+        formData.willingToContribute.length === 0
       ) {
-        alert("Please fill in all fields");
+        alert(
+          "Please fill in all fields and select at least one contribution type"
+        );
         return;
       }
 
@@ -1625,7 +1691,7 @@ const App: React.FC = () => {
         name: "",
         affiliation: "",
         expertiseLevel: "",
-        willingToContribute: "",
+        willingToContribute: [],
       });
     };
 
@@ -1644,6 +1710,7 @@ const App: React.FC = () => {
           style={{
             fontSize: "14px",
             color: "#002147",
+            fontFamily: "'Roboto', sans-serif",
             marginBottom: "16px",
             fontWeight: "600",
             textTransform: "uppercase",
@@ -1848,21 +1915,28 @@ const App: React.FC = () => {
               <button
                 key={option.value}
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  const currentContributions = formData.willingToContribute;
+                  const isSelected = currentContributions.includes(
+                    option.value
+                  );
+
                   setFormData({
                     ...formData,
-                    willingToContribute: option.value,
-                  })
-                }
+                    willingToContribute: isSelected
+                      ? currentContributions.filter((c) => c !== option.value)
+                      : [...currentContributions, option.value],
+                  });
+                }}
                 style={{
-                  backgroundColor:
-                    formData.willingToContribute === option.value
-                      ? option.color
-                      : "white",
-                  color:
-                    formData.willingToContribute === option.value
-                      ? "white"
-                      : option.color,
+                  backgroundColor: formData.willingToContribute.includes(
+                    option.value
+                  )
+                    ? option.color
+                    : "white",
+                  color: formData.willingToContribute.includes(option.value)
+                    ? "white"
+                    : option.color,
                   border: `1px solid ${option.color}`,
                   padding: "4px 8px",
                   borderRadius: "4px",
@@ -1875,13 +1949,13 @@ const App: React.FC = () => {
                   outline: "none",
                 }}
                 onMouseEnter={(e) => {
-                  if (formData.willingToContribute !== option.value) {
+                  if (!formData.willingToContribute.includes(option.value)) {
                     e.currentTarget.style.backgroundColor = option.color;
                     e.currentTarget.style.color = "white";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (formData.willingToContribute !== option.value) {
+                  if (!formData.willingToContribute.includes(option.value)) {
                     e.currentTarget.style.backgroundColor = "white";
                     e.currentTarget.style.color = option.color;
                   }
@@ -1933,7 +2007,8 @@ const App: React.FC = () => {
       style={{
         minHeight: "100vh",
         background: "linear-gradient(135deg, #f8faff 0%, #f0f5ff 100%)",
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily:
+          "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
       <Header />
