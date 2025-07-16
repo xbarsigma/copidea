@@ -1198,18 +1198,16 @@ const App: React.FC = () => {
                     cursor: "pointer",
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: isMobile ? "flex-start" : "center",
-                    flexDirection: isMobile ? "column" : "row",
-                    gap: isMobile ? "16px" : "0",
+                    alignItems: "center",
+                    gap: "16px",
                   }}
                 >
                   <div
                     style={{
                       flex: 1,
                       display: "flex",
-                      alignItems: isMobile ? "flex-start" : "center",
-                      gap: isMobile ? "12px" : "16px",
-                      flexDirection: isMobile ? "column" : "row",
+                      alignItems: "center",
+                      gap: "16px",
                       width: "100%",
                     }}
                   >
@@ -1217,22 +1215,22 @@ const App: React.FC = () => {
                       <div
                         style={{
                           display: "flex",
-                          alignItems: isMobile ? "flex-start" : "center",
-                          gap: isMobile ? "8px" : "12px",
-                          marginBottom: isMobile ? "8px" : "4px",
-                          flexDirection: isMobile ? "column" : "row",
-                          width: "100%",
+                          alignItems: "center",
+                          gap: "12px",
+                          marginBottom: "4px",
+                          flexWrap: "wrap",
                         }}
                       >
                         <h3
                           style={{
-                            fontSize: isMobile ? "18px" : "16px",
+                            fontSize: isMobile ? "16px" : "16px",
                             color: "#002147",
                             fontFamily: "'Roboto', sans-serif",
                             margin: "0",
                             fontWeight: "600",
                             lineHeight: "1.3",
-                            flex: isMobile ? "none" : "1",
+                            flex: "1",
+                            minWidth: "0",
                           }}
                         >
                           {idea.title}
@@ -1242,6 +1240,7 @@ const App: React.FC = () => {
                             display: "flex",
                             gap: "6px",
                             flexWrap: "wrap",
+                            flexShrink: 0,
                           }}
                         >
                           <span
@@ -1338,9 +1337,8 @@ const App: React.FC = () => {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: isMobile ? "16px" : "12px",
-                      justifyContent: isMobile ? "space-between" : "flex-start",
-                      width: isMobile ? "100%" : "auto",
+                      gap: "12px",
+                      flexShrink: 0,
                     }}
                   >
                     <button
@@ -1351,17 +1349,17 @@ const App: React.FC = () => {
                       style={{
                         background: "#ff6b8a",
                         border: "none",
-                        borderRadius: isMobile ? "8px" : "4px",
-                        padding: isMobile ? "12px 16px" : "4px 8px",
+                        borderRadius: "4px",
+                        padding: isMobile ? "8px 12px" : "4px 8px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: isMobile ? "6px" : "3px",
+                        gap: "3px",
                         color: "white",
                         fontWeight: "600",
-                        fontSize: isMobile ? "14px" : "11px",
+                        fontSize: isMobile ? "12px" : "11px",
                         transition: "all 0.2s ease",
-                        minHeight: isMobile ? "44px" : "auto",
+                        minHeight: isMobile ? "36px" : "auto",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-1px)";
@@ -1378,15 +1376,15 @@ const App: React.FC = () => {
                     </button>
                     <span
                       style={{
-                        fontSize: isMobile ? "18px" : "14px",
+                        fontSize: "14px",
                         color: "#64748b",
                         fontWeight: "600",
-                        padding: isMobile ? "8px" : "4px",
+                        padding: "4px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        minHeight: isMobile ? "44px" : "auto",
-                        minWidth: isMobile ? "44px" : "auto",
+                        minHeight: "32px",
+                        minWidth: "32px",
                       }}
                     >
                       {expandedIdeas.has(idea.id) ? "▼" : "▶"}
